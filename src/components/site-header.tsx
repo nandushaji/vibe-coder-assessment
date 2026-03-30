@@ -7,6 +7,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 type NavItem = {
   href: string;
@@ -103,10 +104,10 @@ export function SiteHeader() {
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card shadow-[var(--elevation-1)]">
       <div
-        className="border-b border-primary/15 bg-[oklch(0.96_0.04_264)] px-4 py-2 text-center text-xs text-[oklch(0.42_0.12_264)] sm:text-[13px]"
+        className="border-b border-primary/15 bg-primary/10 px-4 py-2 text-center text-xs text-primary sm:text-[13px]"
         role="status"
       >
-        <span className="font-medium text-[oklch(0.45_0.17_264)]">
+        <span className="font-medium text-primary">
           Secure connection
         </span>
         <span className="mx-2 text-border" aria-hidden>
@@ -140,7 +141,7 @@ export function SiteHeader() {
                   "relative z-10 rounded-full px-4 py-2 text-sm font-medium outline-none transition-colors duration-200 ease-out",
                   "focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2 focus-visible:ring-offset-card",
                   active
-                    ? "text-[oklch(0.42_0.14_264)]"
+                    ? "text-primary"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -151,6 +152,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <a
             href="mailto:support@example.com"
             className={cn(
@@ -197,7 +199,7 @@ export function SiteHeader() {
                     "motion-reduce:transition-colors",
                     "active:scale-[0.99]",
                     isNavActive(pathname, href, exact)
-                      ? "bg-[oklch(0.94_0.04_264)] text-[oklch(0.42_0.14_264)]"
+                      ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-muted/70",
                   )}
                   onClick={() => setOpen(false)}

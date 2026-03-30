@@ -64,6 +64,7 @@ type RefundReceipt = {
   values: z.infer<typeof formSchema>;
   evidenceUrl?: string;
   evidenceName?: string;
+  emailSent?: boolean;
 };
 
 export default function RefundFormPage() {
@@ -121,6 +122,7 @@ export default function RefundFormPage() {
           values,
           evidenceUrl,
           evidenceName,
+          emailSent: result.emailSent,
         });
       } else {
         toast.error("We could not submit your request. Please try again.");
@@ -133,7 +135,8 @@ export default function RefundFormPage() {
   }
 
   if (receipt) {
-    const { values: successData, evidenceUrl, evidenceName } = receipt;
+    const { values: successData, evidenceUrl, evidenceName, emailSent } =
+      receipt;
     return (
       <div className="mx-auto max-w-2xl">
         <PageHeader
@@ -150,6 +153,12 @@ export default function RefundFormPage() {
               Below is the information we recorded. Reference it if you follow up
               with our team.
             </CardDescription>
+            {emailSent ? (
+              <p className="mt-4 rounded-xl border border-success-foreground/20 bg-background/40 px-4 py-3 text-sm text-success-foreground/95">
+                A confirmation email was sent to{" "}
+                <span className="font-medium">{successData.email}</span>.
+              </p>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-6 bg-card/50 px-6 py-8 sm:px-8">
             <dl className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
