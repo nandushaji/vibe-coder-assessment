@@ -8,18 +8,18 @@ Take-home submission: Next.js mini apps—guest refund form, maintenance logger 
 
 ## Live URL
 
-**Production:** <https://example.vercel.app> — replace with your real deployment URL (Vercel **Domains** or GitHub Actions deploy output).
+**Production:** <https://vibe-coder-assessment.vercel.app/>
 
 ---
 
 ## App routes
 
-| Feature | URL | Notes |
-|--------|-----|--------|
-| Guest refund request | `/refunds` | Optional evidence upload |
-| Report maintenance issue | `/maintenance` | Optional photo |
-| Maintenance dashboard | `/maintenance/dashboard` | Filters, status updates |
-| Staff refund review | `/admin/login` → `/admin/refunds` | Not linked in guest nav; set admin env vars |
+| Feature                  | URL                               | Notes                                       |
+| ------------------------ | --------------------------------- | ------------------------------------------- |
+| Guest refund request     | `/refunds`                        | Optional evidence upload                    |
+| Report maintenance issue | `/maintenance`                    | Optional photo                              |
+| Maintenance dashboard    | `/maintenance/dashboard`          | Filters, status updates                     |
+| Staff refund review      | `/admin/login` → `/admin/refunds` | Not linked in guest nav; set admin env vars |
 
 ---
 
@@ -43,17 +43,17 @@ If you see Supabase error **`PGRST205`**, migrations are missing on the remote p
 
 ## Environment variables
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | **Recommended** | Server actions, admin refunds, uploads; never expose as `NEXT_PUBLIC_*` |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Alternative | Use with RLS migrations if service role is omitted (not recommended for production) |
-| `ADMIN_USERNAME` | For `/admin/*` | Staff login |
-| `ADMIN_PASSWORD` | For `/admin/*` | Staff login |
-| `ADMIN_SESSION_SECRET` | For `/admin/*` | JWT cookie signing (≥ 16 characters) |
-| `RESEND_API_KEY` | No | Guest refund confirmation + optional maintenance alerts |
-| `GUEST_EMAIL_FROM` | No | Resend “from” (verify domain in production) |
-| `MAINTENANCE_NOTIFY_EMAIL` | No | Internal email on new maintenance ticket |
+| Variable                                       | Required        | Purpose                                                                             |
+| ---------------------------------------------- | --------------- | ----------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                     | Yes             | Supabase project URL                                                                |
+| `SUPABASE_SERVICE_ROLE_KEY`                    | **Recommended** | Server actions, admin refunds, uploads; never expose as `NEXT_PUBLIC_*`             |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Alternative     | Use with RLS migrations if service role is omitted (not recommended for production) |
+| `ADMIN_USERNAME`                               | For `/admin/*`  | Staff login                                                                         |
+| `ADMIN_PASSWORD`                               | For `/admin/*`  | Staff login                                                                         |
+| `ADMIN_SESSION_SECRET`                         | For `/admin/*`  | JWT cookie signing (≥ 16 characters)                                                |
+| `RESEND_API_KEY`                               | No              | Guest refund confirmation + optional maintenance alerts                             |
+| `GUEST_EMAIL_FROM`                             | No              | Resend “from” (verify domain in production)                                         |
+| `MAINTENANCE_NOTIFY_EMAIL`                     | No              | Internal email on new maintenance ticket                                            |
 
 Never commit `.env.local`.
 
@@ -65,12 +65,12 @@ Never commit `.env.local`.
 - Tables: `refunds`, `maintenance_tickets`
 - Storage: public buckets `refund-evidence`, `maintenance-photos` (5 MB cap)
 
-| Migration file | Purpose |
-|----------------|---------|
-| `20250330120000_extensions_and_core_tables.sql` | Extensions, core tables |
-| `20250330120100_storage_buckets.sql` | Storage buckets |
-| `20250330120200_rls_anon_policies.sql` | RLS for anon/publishable key |
-| `20250330120300_refunds_review_status.sql` | Refund review status column |
+| Migration file                                  | Purpose                      |
+| ----------------------------------------------- | ---------------------------- |
+| `20250330120000_extensions_and_core_tables.sql` | Extensions, core tables      |
+| `20250330120100_storage_buckets.sql`            | Storage buckets              |
+| `20250330120200_rls_anon_policies.sql`          | RLS for anon/publishable key |
+| `20250330120300_refunds_review_status.sql`      | Refund review status column  |
 
 New migration: `npm run migration:new -- name` → edit file → `npm run db:push`
 
@@ -86,10 +86,10 @@ This app uses **Supabase** for persistence only—not a local SQLite file.
 
 ### GitHub Actions (CI/CD)
 
-| Workflow | Trigger | What it does |
-|----------|---------|--------------|
-| `ci.yml` | Push & PR to `main` / `master` | `npm run lint`, `npm run build` |
-| `deploy-vercel.yml` | Push to `main` / `master` | `vercel pull` (production env), `vercel build`, `vercel deploy --prebuilt --prod` |
+| Workflow            | Trigger                        | What it does                                                                      |
+| ------------------- | ------------------------------ | --------------------------------------------------------------------------------- |
+| `ci.yml`            | Push & PR to `main` / `master` | `npm run lint`, `npm run build`                                                   |
+| `deploy-vercel.yml` | Push to `main` / `master`      | `vercel pull` (production env), `vercel build`, `vercel deploy --prebuilt --prod` |
 
 **Repository secrets** (Settings → Secrets and variables → Actions): `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (from [Vercel tokens](https://vercel.com/account/tokens) and Project → Settings → General, or `.vercel/project.json` after `vercel link`).
 
