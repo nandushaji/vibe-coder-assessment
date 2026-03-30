@@ -1,14 +1,19 @@
-import { getMaintenanceTickets } from '@/app/actions/maintenance';
-import DashboardClient from './client-page';
+import { Suspense } from "react";
+import { MaintenanceTableSkeleton } from "@/components/maintenance/maintenance-dashboard-skeleton";
+import MaintenanceDashboardLoader from "./maintenance-dashboard-loader";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
-  const tickets = await getMaintenanceTickets();
-  
+export default function DashboardPage() {
   return (
-    <div className="container mx-auto py-10 px-4">
-      <DashboardClient initialTickets={tickets} />
-    </div>
+    <Suspense
+      fallback={
+        <div className="w-full space-y-8 pt-4">
+          <MaintenanceTableSkeleton />
+        </div>
+      }
+    >
+      <MaintenanceDashboardLoader />
+    </Suspense>
   );
 }

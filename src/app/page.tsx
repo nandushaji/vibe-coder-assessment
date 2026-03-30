@@ -1,45 +1,101 @@
 "use client";
 
-import Link from 'next/link';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import Link from "next/link";
+import { buttonVariants } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { FileText, Wrench } from "lucide-react";
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="max-w-3xl w-full space-y-8">
-        <div className="text-center">
-          <h1 className="text-4xl font-bold tracking-tight text-gray-900">Vibe Coder Assessment</h1>
-          <p className="text-lg text-gray-600 mt-2">Part B: Practical Mini Apps</p>
-        </div>
+    <div className="mx-auto max-w-3xl space-y-16 pb-6">
+      <section className="text-center sm:text-left">
+        <h1 className="text-[2.5rem] font-normal leading-[1.15] tracking-tight text-foreground sm:text-5xl">
+          How can we help?
+        </h1>
+        <p className="mx-auto mt-5 max-w-xl text-lg leading-relaxed text-muted-foreground sm:mx-0">
+          Request a refund or report a maintenance issue. You will get a clear
+          confirmation with the details you submitted.
+        </p>
+      </section>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Guest Refund Form</CardTitle>
-              <CardDescription>
-                A web-based form where a guest can request a refund with conditional logic and data persistence.
-              </CardDescription>
+      <section aria-labelledby="services-heading">
+        <h2
+          id="services-heading"
+          className="sr-only"
+        >
+          Available services
+        </h2>
+        <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
+          <Card className="rounded-2xl border border-border bg-card shadow-[var(--elevation-1)] transition-shadow duration-200 hover:shadow-[var(--elevation-2)]">
+            <CardHeader className="space-y-4 pb-2">
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-[oklch(0.94_0.04_264)] text-[oklch(0.45_0.17_264)]">
+                <FileText className="size-5" aria-hidden />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-medium tracking-tight">
+                  Refund request
+                </CardTitle>
+                <CardDescription className="mt-2 text-[15px] leading-relaxed">
+                  For billing, cancellations, or stay-related refunds.
+                </CardDescription>
+              </div>
             </CardHeader>
-            <CardContent>
-              <Link href="/refunds" className={buttonVariants({ variant: "default" }) + " w-full"}>Open Refund Form</Link>
+            <CardContent className="pt-4">
+              <Link
+                href="/refunds"
+                className={buttonVariants({
+                  variant: "default",
+                  size: "lg",
+                }) + " w-full"}
+              >
+                Get started
+              </Link>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Maintenance Logger</CardTitle>
-              <CardDescription>
-                A mini app to submit maintenance issues and a dashboard to track and update their status.
-              </CardDescription>
+          <Card className="rounded-2xl border border-border bg-card shadow-[var(--elevation-1)] transition-shadow duration-200 hover:shadow-[var(--elevation-2)]">
+            <CardHeader className="space-y-4 pb-2">
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-[oklch(0.94_0.04_264)] text-[oklch(0.45_0.17_264)]">
+                <Wrench className="size-5" aria-hidden />
+              </div>
+              <div>
+                <CardTitle className="text-lg font-medium tracking-tight">
+                  Maintenance
+                </CardTitle>
+                <CardDescription className="mt-2 text-[15px] leading-relaxed">
+                  Log an issue and receive a ticket number for follow-up.
+                </CardDescription>
+              </div>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <Link href="/maintenance" className={buttonVariants({ variant: "outline" }) + " w-full"}>Submit Issue</Link>
-              <Link href="/maintenance/dashboard" className={buttonVariants({ variant: "default" }) + " w-full"}>View Dashboard</Link>
+            <CardContent className="flex flex-col gap-3 pt-4">
+              <Link
+                href="/maintenance"
+                className={buttonVariants({
+                  variant: "default",
+                  size: "lg",
+                }) + " w-full"}
+              >
+                Report an issue
+              </Link>
+              <Link
+                href="/maintenance/dashboard"
+                className={buttonVariants({
+                  variant: "outline",
+                  size: "lg",
+                }) + " w-full"}
+              >
+                Open dashboard
+              </Link>
             </CardContent>
           </Card>
         </div>
-      </div>
+      </section>
     </div>
   );
 }

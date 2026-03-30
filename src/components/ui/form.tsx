@@ -1,5 +1,4 @@
 import * as React from "react"
-import * as LabelPrimitive from "@radix-ui/react-label"
 import { Slot } from "@radix-ui/react-slot"
 import {
   Controller,
@@ -85,9 +84,9 @@ const useFormField = () => {
 }
 
 const FormLabel = React.forwardRef<
-  React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
->(({ className, ...props }, ref) => {
+  React.ElementRef<typeof Label>,
+  React.ComponentPropsWithoutRef<typeof Label> & { required?: boolean }
+>(({ className, required, children, ...props }, ref) => {
   const { error, formItemId } = useFormField()
 
   return (
@@ -96,7 +95,14 @@ const FormLabel = React.forwardRef<
       className={cn(error && "text-destructive", className)}
       htmlFor={formItemId}
       {...props}
-    />
+    >
+      {children}
+      {required ? (
+        <span className="text-destructive" aria-hidden="true">
+          {" *"}
+        </span>
+      ) : null}
+    </Label>
   )
 })
 FormLabel.displayName = "FormLabel"

@@ -45,11 +45,81 @@ This repository contains the solutions for the Vibe Coder Take-Home Assessment.
 
 ## Part B: Practical Mini Apps
 
+### Supabase (database + file storage)
+
+Data and uploads use **Supabase** (Postgres + Storage). Schema is managed with **versioned migrations** under `supabase/migrations/`.
+
+#### One-time: link the CLI to your project
+
+1. Install dependencies: `npm install`.
+2. Log in: `npx supabase login` (opens the browser).
+3. Link this repo to your Supabase project (project ref is the subdomain in `https://<ref>.supabase.co`):
+
+   ```bash
+   npm run db:link
+   ```
+
+4. Push migrations to the remote database:
+
+   ```bash
+   npm run db:push
+   ```
+
+That applies, in order:
+
+| Migration | Purpose |
+|-----------|---------|
+| `20250330120000_extensions_and_core_tables.sql` | `pgcrypto`, `refunds`, `maintenance_tickets` |
+| `20250330120100_storage_buckets.sql` | Public buckets `refund-evidence` & `maintenance-photos` (5 MB limit) |
+| `20250330120200_rls_anon_policies.sql` | RLS policies for **anon** (needed for the publishable key) |
+
+**Service role only:** you can still run `db:push`; migration `20250330120200` is harmless (anon policies do not restrict service role).
+
+#### Local Supabase (optional)
+
+Requires [Docker](https://docs.docker.com/get-docker/). Then:
+
+```bash
+npm run db:start    # local Postgres + Studio
+npm run db:reset    # replay all migrations (+ optional seeds if enabled)
+npm run db:stop
+```
+
+Match `[db] major_version` in `supabase/config.toml` to your hosted Postgres major version if you use local stacks heavily.
+
+#### Env
+
+Copy `.env.example` → `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL`.
+
+- **Recommended:** `SUPABASE_SERVICE_ROLE_KEY` (Settings → API → *service_role*, server-only).
+- **Alternative:** `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` — requires migration `20250330120200` (included in `db:push`).
+
+Never commit `.env.local`. Do not put **service_role** in any `NEXT_PUBLIC_*` variable.
+
+#### New migration
+
+```bash
+npm run migration:new -- your_change_name
+```
+
+Edit the new file under `supabase/migrations/`, then `npm run db:push`.
+
+**Error `PGRST205`:** migrations were not applied to this project. Run `npm run db:push` (after `db:link`) or paste each file from `supabase/migrations/` into the SQL Editor in timestamp order.
+
 ### Setup Instructions
+
 1. Clone the repository.
 2. Run `npm install`.
-3. Run `npm run dev` to start the development server.
+3. Configure Supabase as above.
+4. Run `npm run dev` to start the development server.
 
 ### Apps Included
-*   **Guest Refund Request Form:** `/refunds`
-*   **Maintenance Issue Logger:** `/maintenance`
+
+*   **Guest Refund Request Form:** `/refunds` (optional evidence file → Supabase Storage `refund-evidence`)
+*   **Report maintenance issue:** `/maintenance` (optional photo → `maintenance-photos`)
+*   **Issue dashboard:** `/maintenance/dashboard` (table, filters, status updates)
+*   **Staff refund review (internal):** `/admin/login` → `/admin/refunds` — **not linked** from the guest header. Requires `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `ADMIN_SESSION_SECRET` (see `.env.example`). Uses `SUPABASE_SERVICE_ROLE_KEY` to read the `refunds` table (the publishable key has no SELECT on refunds).
+
+### Deploy notes
+
+On Vercel (or similar), add the same env vars. Use Supabase for persistence; a local `data.sqlite` file is **not** used by this app.
