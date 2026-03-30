@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { LogOut, Receipt } from "lucide-react";
 import { adminLogout } from "@/app/actions/admin-auth";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export const metadata: Metadata = {
   title: "Refunds · Operations",
@@ -33,18 +34,21 @@ export default function AdminRefundsSectionLayout({
               </h1>
             </div>
           </div>
-          <form action={adminLogout} className="shrink-0">
-            <Button
-              type="submit"
-              variant="outline"
-              size="sm"
-              className="h-9 rounded-full border-border/90 px-2.5 font-medium shadow-sm sm:px-4"
-              aria-label="Sign out"
-            >
-              <LogOut className="size-4 sm:hidden" aria-hidden />
-              <span className="hidden sm:inline">Sign out</span>
-            </Button>
-          </form>
+          <div className="flex shrink-0 items-center gap-2">
+            <ThemeToggle />
+            <form action={adminLogout}>
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                className="h-9 rounded-full border-border/90 px-2.5 font-medium shadow-sm sm:px-4"
+                aria-label="Sign out"
+              >
+                <LogOut className="size-4 sm:hidden" aria-hidden />
+                <span className="hidden sm:inline">Sign out</span>
+              </Button>
+            </form>
+          </div>
         </div>
       </header>
       <div className="flex-1">{children}</div>

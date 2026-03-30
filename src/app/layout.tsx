@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/app-shell";
-import { Toaster } from "@/components/ui/sonner";
+import { AppProviders } from "@/components/app-providers";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -28,10 +28,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${geistMono.variable} h-full`}>
-      <body className="min-h-full flex flex-col">
-        <AppShell>{children}</AppShell>
-        <Toaster position="top-center" richColors closeButton />
+    <html
+      lang="en"
+      className={`${inter.variable} ${geistMono.variable} h-full`}
+      suppressHydrationWarning
+    >
+      <body className="flex min-h-full flex-col">
+        <AppProviders>
+          <AppShell>{children}</AppShell>
+        </AppProviders>
       </body>
     </html>
   );

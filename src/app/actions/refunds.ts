@@ -1,6 +1,8 @@
 "use server";
 
+import { format } from "date-fns";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendRefundSubmissionEmail } from "@/lib/email/guest-notifications";
 import { z } from "zod";
 
 const refundSchema = z.object({
@@ -42,7 +44,19 @@ export async function submitRefund(data: z.infer<typeof refundSchema>) {
       return { success: false, error: error.message };
     }
 
-    return { success: true, data: parsed.data };
+    const bookingDateLabel = format(
+      new Date(parsed.data.bookingDate),
+      "MMMM d, yyyy",
+    );
+    const { sent: emailSent } = await sendRefundSubmissionEmail({
+      to: parsed.data.email,
+      fullName: parsed.data.fullName,
+      bookingReference: parsed.data.bookingReference,
+      bookingDateLabel,
+      refundReason: parsed.data.refundReason,
+    });
+
+    return { success: true, data: parsed.data, emailSent };
   } catch (e) {
     console.error("Failed to submit refund:", e);
     return { success: false, error: "Database error" };

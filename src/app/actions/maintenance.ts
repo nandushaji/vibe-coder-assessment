@@ -1,6 +1,7 @@
 "use server";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { sendMaintenanceTicketNotifyEmail } from "@/lib/email/guest-notifications";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 
@@ -55,6 +56,14 @@ export async function submitMaintenanceTicket(
       console.error("Failed to submit ticket:", error);
       return { success: false, error: error.message };
     }
+
+    void sendMaintenanceTicketNotifyEmail({
+      ticketNumber,
+      property: parsed.data.property,
+      category: parsed.data.category,
+      urgency: parsed.data.urgency,
+      descriptionPreview: parsed.data.description,
+    }).catch((e) => console.error("Maintenance notify email:", e));
 
     revalidatePath("/maintenance/dashboard");
     return { success: true, ticketNumber };

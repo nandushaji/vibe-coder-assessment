@@ -1,125 +1,143 @@
 # Vibe Coder Assessment
 
-This repository contains the solutions for the Vibe Coder Take-Home Assessment.
+Take-home submission: **Part A** (written) and **Part B** (Next.js mini apps—guest refund form, maintenance logger + dashboard, staff refund review).
 
-## Part A: Written Questions
-
-### Q1 — Architecture & Decision-Making
-**Scenario:** A property management company needs an internal tool for expense claims with 12 fields, file uploads, approval routing based on amount ($5K threshold), and searchability.
-
-**Architecture & Tech Stack:**
-*   **Framework:** Next.js (App Router) - Provides a unified full-stack environment. React Server Components and Server Actions simplify the data fetching and mutation layer without needing a separate backend.
-*   **Database:** PostgreSQL (via Supabase or Vercel Postgres) - Relational data is perfect for structured forms, audit trails, and complex queries.
-*   **File Storage:** AWS S3 or Supabase Storage. I would use presigned URLs for uploads: the client requests a secure, temporary upload URL from the server, uploads the file directly to the bucket (saving server bandwidth), and then submits the resulting file URL with the form data.
-*   **Approval Routing Logic:** I would implement a state machine pattern in the database (e.g., `status` enum: `PENDING_MANAGER`, `PENDING_DIRECTOR`, `APPROVED`, `REJECTED`). On submission, a server action evaluates the amount:
-    *   If `< $5,000`, set status to `PENDING_MANAGER`.
-    *   If `>= $5,000`, set status to `PENDING_DIRECTOR`.
-    *   Database triggers or application-level webhooks (e.g., using Inngest or custom background jobs) would send email/Slack notifications to the respective approvers.
-*   **Searchability:** For basic search, I'd index key columns in PostgreSQL (e.g., `employee_id`, `expense_category`, `status`) and use `ILIKE` or Postgres Full-Text Search for text fields. If the dataset grows massively, I would sync the data to Elasticsearch or Algolia.
-
-### Q2 — Debugging & Problem-Solving
-**Scenario:** A web form submitting data to a Google Sheet via an API suddenly fails silently.
-
-**Debugging Steps (in order):**
-1.  **Check the Browser Network Tab & Console:** *Why:* To determine if the request is even leaving the client, and if the API is returning a 200 OK or a silent 4xx/5xx error that the frontend isn't handling properly.
-2.  **Check Server/API Logs:** *Why:* If the client request succeeds, the failure is happening on the server. Logs (e.g., Vercel Logs, Datadog) will reveal if the Google Sheets API call is throwing an error.
-3.  **Verify Google Sheets API Authentication/Credentials:** *Why:* Service account keys or OAuth tokens might have expired, been revoked, or the service account might have been accidentally removed from the Google Sheet's sharing permissions.
-4.  **Check Google Sheets API Quotas/Limits:** *Why:* The app might have hit the Google Sheets API rate limit (e.g., 60 requests per minute per user). This often causes silent failures if the API wrapper doesn't throw explicit exceptions.
-5.  **Inspect the Target Google Sheet:** *Why:* A user might have renamed the target worksheet tab, deleted columns, added data validation rules, or changed the file's structure, causing the API's append operation to fail or write to an unexpected location.
-
-### Q3 — Integration Thinking
-**Scenario:** Connect a CRM, a messaging platform, and a Google Sheet. When a deal is "Closed Won", notify the team and add a row to the sheet.
-
-**Architecture & Tools:**
-*   **Tool:** I would use **Make.com** (or n8n) for its visual workflow builder, robust error handling, and built-in integrations for most CRMs, Slack/Teams, and Google Sheets.
-*   **Trigger:** A webhook in the CRM triggered specifically on the `deal.stage.changed` event.
-*   **Duplicate Prevention (Idempotency):** 
-    *   The CRM webhook payload should include a unique `deal_id`.
-    *   Before inserting into the Google Sheet, the workflow will perform a "Search Rows" step using the `deal_id`. If a row exists, the workflow halts (preventing duplicates).
-    *   Alternatively, use a database (like Redis or a Make.com data store) to cache processed `deal_id`s for 24 hours.
-*   **Failure Handling:**
-    *   **Retries:** Configure the messaging and sheets modules to automatically retry on 429 (Rate Limit) or 5xx (Server Error) responses with exponential backoff.
-    *   **Dead-Letter Queue / Fallback:** If the messaging platform is completely down, the workflow should catch the error and route a fallback notification (e.g., an email to the admin team) containing the payload, ensuring the "Closed Won" event isn't lost.
+**Stack:** Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS, Supabase (PostgreSQL + Storage), optional Resend for email.
 
 ---
 
-## Part B: Practical Mini Apps
+## Live URL
 
-### Supabase (database + file storage)
+**Production:** <https://example.vercel.app> — replace with your real deployment URL (Vercel **Domains** or GitHub Actions deploy output).
 
-Data and uploads use **Supabase** (Postgres + Storage). Schema is managed with **versioned migrations** under `supabase/migrations/`.
+---
 
-#### One-time: link the CLI to your project
+## App routes
 
-1. Install dependencies: `npm install`.
-2. Log in: `npx supabase login` (opens the browser).
-3. Link this repo to your Supabase project (project ref is the subdomain in `https://<ref>.supabase.co`):
+| Feature | URL | Notes |
+|--------|-----|--------|
+| Guest refund request | `/refunds` | Optional evidence upload |
+| Report maintenance issue | `/maintenance` | Optional photo |
+| Maintenance dashboard | `/maintenance/dashboard` | Filters, status updates |
+| Staff refund review | `/admin/login` → `/admin/refunds` | Not linked in guest nav; set admin env vars |
 
+---
+
+## Run locally
+
+1. Clone the repo and install: `npm install`
+2. Copy `.env.example` to `.env.local` and fill values (see [Environment variables](#environment-variables))
+3. **First-time database:** link Supabase and apply migrations:
    ```bash
+   npx supabase login
    npm run db:link
-   ```
-
-4. Push migrations to the remote database:
-
-   ```bash
    npm run db:push
    ```
+4. Start the app: `npm run dev` → [http://localhost:3000](http://localhost:3000)
 
-That applies, in order:
+If you see Supabase error **`PGRST205`**, migrations are missing on the remote project—run `db:push` or execute `supabase/migrations/*.sql` in the Supabase SQL editor in timestamp order.
 
-| Migration | Purpose |
-|-----------|---------|
-| `20250330120000_extensions_and_core_tables.sql` | `pgcrypto`, `refunds`, `maintenance_tickets` |
-| `20250330120100_storage_buckets.sql` | Public buckets `refund-evidence` & `maintenance-photos` (5 MB limit) |
-| `20250330120200_rls_anon_policies.sql` | RLS policies for **anon** (needed for the publishable key) |
+**Optional local Supabase** (Docker): `npm run db:start` · `npm run db:reset` · `npm run db:stop`
 
-**Service role only:** you can still run `db:push`; migration `20250330120200` is harmless (anon policies do not restrict service role).
+---
 
-#### Local Supabase (optional)
+## Environment variables
 
-Requires [Docker](https://docs.docker.com/get-docker/). Then:
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | **Recommended** | Server actions, admin refunds, uploads; never expose as `NEXT_PUBLIC_*` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` | Alternative | Use with RLS migrations if service role is omitted (not recommended for production) |
+| `ADMIN_USERNAME` | For `/admin/*` | Staff login |
+| `ADMIN_PASSWORD` | For `/admin/*` | Staff login |
+| `ADMIN_SESSION_SECRET` | For `/admin/*` | JWT cookie signing (≥ 16 characters) |
+| `RESEND_API_KEY` | No | Guest refund confirmation + optional maintenance alerts |
+| `GUEST_EMAIL_FROM` | No | Resend “from” (verify domain in production) |
+| `MAINTENANCE_NOTIFY_EMAIL` | No | Internal email on new maintenance ticket |
 
-```bash
-npm run db:start    # local Postgres + Studio
-npm run db:reset    # replay all migrations (+ optional seeds if enabled)
-npm run db:stop
-```
+Never commit `.env.local`.
 
-Match `[db] major_version` in `supabase/config.toml` to your hosted Postgres major version if you use local stacks heavily.
+---
 
-#### Env
+## Database
 
-Copy `.env.example` → `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL`.
+- Migrations: `supabase/migrations/`
+- Tables: `refunds`, `maintenance_tickets`
+- Storage: public buckets `refund-evidence`, `maintenance-photos` (5 MB cap)
 
-- **Recommended:** `SUPABASE_SERVICE_ROLE_KEY` (Settings → API → *service_role*, server-only).
-- **Alternative:** `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY` — requires migration `20250330120200` (included in `db:push`).
+| Migration file | Purpose |
+|----------------|---------|
+| `20250330120000_extensions_and_core_tables.sql` | Extensions, core tables |
+| `20250330120100_storage_buckets.sql` | Storage buckets |
+| `20250330120200_rls_anon_policies.sql` | RLS for anon/publishable key |
+| `20250330120300_refunds_review_status.sql` | Refund review status column |
 
-Never commit `.env.local`. Do not put **service_role** in any `NEXT_PUBLIC_*` variable.
+New migration: `npm run migration:new -- name` → edit file → `npm run db:push`
 
-#### New migration
+---
 
-```bash
-npm run migration:new -- your_change_name
-```
+## Deploy (Vercel)
 
-Edit the new file under `supabase/migrations/`, then `npm run db:push`.
+1. Create a Vercel project and add the same variables as in `.env.example` (Production environment).
+2. Connect your Git repo or deploy with `npx vercel --prod`.
+3. After changing env vars, redeploy.
 
-**Error `PGRST205`:** migrations were not applied to this project. Run `npm run db:push` (after `db:link`) or paste each file from `supabase/migrations/` into the SQL Editor in timestamp order.
+This app uses **Supabase** for persistence only—not a local SQLite file.
 
-### Setup Instructions
+### GitHub Actions (CI/CD)
 
-1. Clone the repository.
-2. Run `npm install`.
-3. Configure Supabase as above.
-4. Run `npm run dev` to start the development server.
+| Workflow | Trigger | What it does |
+|----------|---------|--------------|
+| `ci.yml` | Push & PR to `main` / `master` | `npm run lint`, `npm run build` |
+| `deploy-vercel.yml` | Push to `main` / `master` | `vercel pull` (production env), `vercel build`, `vercel deploy --prebuilt --prod` |
 
-### Apps Included
+**Repository secrets** (Settings → Secrets and variables → Actions): `VERCEL_TOKEN`, `VERCEL_ORG_ID`, `VERCEL_PROJECT_ID` (from [Vercel tokens](https://vercel.com/account/tokens) and Project → Settings → General, or `.vercel/project.json` after `vercel link`).
 
-*   **Guest Refund Request Form:** `/refunds` (optional evidence file → Supabase Storage `refund-evidence`)
-*   **Report maintenance issue:** `/maintenance` (optional photo → `maintenance-photos`)
-*   **Issue dashboard:** `/maintenance/dashboard` (table, filters, status updates)
-*   **Staff refund review (internal):** `/admin/login` → `/admin/refunds` — **not linked** from the guest header. Requires `ADMIN_USERNAME`, `ADMIN_PASSWORD`, and `ADMIN_SESSION_SECRET` (see `.env.example`). Uses `SUPABASE_SERVICE_ROLE_KEY` to read the `refunds` table (the publishable key has no SELECT on refunds).
+If the Vercel project **also** has Git auto-deploy enabled, disable one path to avoid duplicate production deploys.
 
-### Deploy notes
+---
 
-On Vercel (or similar), add the same env vars. Use Supabase for persistence; a local `data.sqlite` file is **not** used by this app.
+## Bonus (beyond brief)
+
+- **Dark mode** — System default + toggle (guest header, admin header, admin login); toasts follow theme.
+- **Optional email** — Resend: refund confirmation to guest; optional ops notification for new maintenance tickets when `MAINTENANCE_NOTIFY_EMAIL` is set.
+- **Admin refunds** — Search, filters, pagination, CSV export, review statuses.
+- **CI/CD** — GitHub Actions as above.
+
+---
+
+## Part A — Written questions
+
+### Q1 — Architecture & decision-making
+
+**Scenario:** Internal expense claims (12 fields, file uploads). Routing: &lt; $5K → department manager; ≥ $5K → finance director + CEO. All submissions stored and searchable by finance.
+
+**Approach:**
+
+- **Stack:** Next.js (App Router) for a single full-stack surface; PostgreSQL (e.g. Supabase) for structured data, audit-friendly models, and queries.
+- **Files:** Object storage (S3 or Supabase Storage) with **presigned uploads** from the client, then persist object URLs with the claim.
+- **Routing:** DB-backed workflow (e.g. status: `PENDING_MANAGER`, `PENDING_DIRECTOR`, `APPROVED`, `REJECTED`). On submit, server evaluates amount and sets the next state; notify approvers (email/Slack/job queue).
+- **Search:** Indexed columns in Postgres; `ILIKE` or full-text search for text fields; scale-out options (e.g. Elasticsearch) only if needed later.
+
+### Q2 — Debugging (Google Sheet API, silent failure)
+
+1. **Browser Network + Console** — Confirm the request fires and whether the API returns an error the UI ignores.
+2. **Server logs** — See if the Sheets call fails server-side after a “successful” client response.
+3. **Auth** — Service account / OAuth expiry, revocation, or sheet sharing changes.
+4. **Quotas** — Sheets API rate limits causing failures without clear UI errors.
+5. **Sheet structure** — Renamed tabs, moved columns, or validation blocking writes.
+
+### Q3 — Integration (CRM + messaging + Google Sheet on “Closed Won”)
+
+- **Tools:** e.g. **Make.com** or **n8n** for CRM webhooks → Slack/Teams → Sheets.
+- **Trigger:** CRM webhook on stage change (e.g. closed won).
+- **Idempotency:** Stable `deal_id` in payload; search sheet (or small store) before insert to prevent duplicates from double webhook delivery.
+- **Failures:** Retries with backoff on 429/5xx; fallback channel (e.g. email to admin) if messaging is down; log payloads for replay.
+
+---
+
+## Part B — Practical apps
+
+Guest and maintenance flows write to Supabase; staff refund UI requires service role and HTTP-only admin session. See routes and env tables above.
+
+**Scripts:** `npm run dev` · `npm run build` · `npm run lint`
